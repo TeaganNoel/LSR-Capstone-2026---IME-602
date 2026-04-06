@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-
-#Author: Mason Allen
-#Description: Edited version of original parser script. Made for functionality in main GUI. 
-#Created Date: 4/6/2026
-#Last Updated Date: 4/6/2026
-
 """
 dataq_parse.py
 
@@ -50,16 +44,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-# 🔹 NEW (GUI support)
-from tkinter import filedialog as fd
-from tkinter import messagebox
-
 
 # ----------------------------- Utility helpers ----------------------------- #
 
 def col_idx_to_excel_letter(idx0: int) -> str:
     """Convert 0-based column index to Excel letters: 0->A, 1->B, ..., 25->Z, 26->AA, ..."""
-    n = idx0 + 1
     n = idx0 + 1
     letters = []
     while n > 0:
@@ -103,14 +92,13 @@ def read_csv_table(path: Path, sniff_bytes: int = 65536) -> List[List[str]]:
     Read CSV into a list of rows (ragged rows allowed).
     Sniffs CSV dialect for delimiter/quotechar/newline.
     """
-    
     raw = path.read_bytes()
     sample = raw[:sniff_bytes].decode("utf-8", errors="replace")
 
     try:
         dialect = csv.Sniffer().sniff(sample)
     except csv.Error:
-        dialect = csv.excel
+        dialect = csv.excel  # fallback
 
     text = raw.decode("utf-8", errors="replace").splitlines()
 
@@ -123,7 +111,6 @@ def read_csv_table(path: Path, sniff_bytes: int = 65536) -> List[List[str]]:
 
 def find_row_by_colA_value(rows: List[List[str]], target: str) -> Optional[int]:
     """Find the first row index (0-based) where column A matches target (case-insensitive)."""
-    
     tgt = target.strip().lower()
     for i, r in enumerate(rows):
         if not r:
@@ -178,6 +165,7 @@ def extract_time_series_index(rows: List[List[str]], start_row0: int) -> List[Tu
     """
     ts: List[Tuple[int, float]] = []
 
+    # Find first numeric time row
     r0 = start_row0
     while r0 < len(rows):
         t = parse_float_maybe(rows[r0][0] if rows[r0] else "")
@@ -188,6 +176,7 @@ def extract_time_series_index(rows: List[List[str]], start_row0: int) -> List[Tu
     if r0 >= len(rows):
         return ts
 
+    # Collect contiguous numeric time rows
     for k in range(r0, len(rows)):
         t = parse_float_maybe(rows[k][0] if rows[k] else "")
         if t is None:
@@ -204,7 +193,7 @@ class DataQParseResult:
     path: Path
     sec_row_1: int
     ncols: int
-    combined_headers: List[Tuple[str, str]]
+    combined_headers: List[Tuple[str, str]]          # (Excel col letter, combined header string)
     first_data_row_1: Optional[int]
     last_data_row_1: Optional[int]
     first_time_s: Optional[float]
@@ -215,7 +204,6 @@ class DataQParseResult:
 
 def analyze_dataq_csv(path: Path) -> DataQParseResult:
     """High-level parse routine suitable for CLI use or import by a master script."""
-    
     rows = read_csv_table(path)
 
     sec_row0 = find_row_by_colA_value(rows, "sec")
@@ -274,40 +262,6 @@ def print_report(r: DataQParseResult) -> None:
         print(f"Total time spanned (s): {r.total_span_s}")
 
     print()
-
-
-# ----------------------------- GUI entry point ----------------------------- #
-
-# 🔹 NEW
-def run(parent):
-    """
-    GUI wrapper for Toplevel-based execution.
-    Keeps all core logic intact.
-    """
-
-    file_path = fd.askopenfilename(
-        parent=parent,
-        title="Select DataQ CSV File",
-        filetypes=[("CSV files", "*.csv")]
-    )
-
-    if not file_path:
-        print("No file selected.")
-        return
-
-    try:
-        result = analyze_dataq_csv(Path(file_path))
-    except Exception as e:
-        messagebox.showerror("Error", str(e), parent=parent)
-        return
-
-    print_report(result)
-
-    messagebox.showinfo(
-        "Success",
-        "Analysis complete. See console output.",
-        parent=parent
-    )
 
 
 # ----------------------------- CLI entry point ----------------------------- #

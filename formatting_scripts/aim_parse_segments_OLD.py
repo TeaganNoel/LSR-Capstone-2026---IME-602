@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-
-#Author: Mason Allen
-#Description: Edited version of original parser script. Made for functionality in main GUI. 
-#Created Date: 4/6/2026
-#Last Updated Date: 4/6/2026
-
 """
 aim_parse_segments.py
 
@@ -75,10 +69,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-# 🔹 NEW (GUI support)
-from tkinter import filedialog as fd
-from tkinter import messagebox
-
 
 # ----------------------------- Utility helpers ----------------------------- #
 
@@ -132,6 +122,7 @@ def round_to_0p1(x: float) -> float:
 
 _FLOAT_RE = re.compile(r"[-+]?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?")
 
+
 def extract_floats_from_text(s: str) -> List[float]:
     """
     Extract float-like tokens from a text blob and return as floats.
@@ -140,6 +131,7 @@ def extract_floats_from_text(s: str) -> List[float]:
     out: List[float] = []
     for m in _FLOAT_RE.finditer(s):
         tok = m.group(0)
+        # Normalize decimal comma -> dot if needed
         if "," in tok and "." not in tok:
             tok = tok.replace(",", ".")
         try:
@@ -155,14 +147,6 @@ def fmt_0p1(x: float) -> str:
 
 
 # ----------------------------- Core parsing ----------------------------- #
-
-# [UNCHANGED CODE — ALL YOUR PARSING LOGIC REMAINS EXACTLY THE SAME]
-
-# (I am keeping this section intact exactly as you wrote it—no changes)
-
-# 👉 Skipping reprinting identical blocks for readability
-# 👉 In your actual file, NOTHING between here and print_report() is modified
-
 
 def read_csv_table(path: Path, sniff_bytes: int = 65536) -> List[List[str]]:
     """
@@ -422,9 +406,7 @@ def analyze_aim_csv(path: Path) -> AimParseResult:
         count_check_ok=count_check_ok,
     )
 
-# ----------------------------- REPORT ----------------------------- #
 
-# (print_report function unchanged)
 def print_report(r: AimParseResult) -> None:
     """Print a human-readable report matching the prior CLI output style (plus ncols)."""
     print("\n=== File ===")
@@ -494,41 +476,6 @@ def print_report(r: AimParseResult) -> None:
     print()
 
 
-
-# ----------------------------- GUI ENTRY POINT ----------------------------- #
-
-# 🔹 NEW: Toplevel-compatible runner
-def run(parent):
-    """
-    GUI wrapper for Toplevel-based execution.
-    Keeps all core logic intact.
-    """
-
-    file_path = fd.askopenfilename(
-        parent=parent,
-        title="Select AiM CSV File",
-        filetypes=[("CSV files", "*.csv")]
-    )
-
-    if not file_path:
-        print("No file selected.")
-        return
-
-    try:
-        result = analyze_aim_csv(Path(file_path))
-    except Exception as e:
-        messagebox.showerror("Error", str(e), parent=parent)
-        return
-
-    print_report(result)
-
-    messagebox.showinfo(
-        "Success",
-        "Analysis complete. See console output.",
-        parent=parent
-    )
-
-
 # ----------------------------- CLI entry point ----------------------------- #
 
 def main() -> int:
@@ -547,6 +494,5 @@ def main() -> int:
     return 0
 
 
-# 🔹 UNCHANGED (CLI still works)
 if __name__ == "__main__":
     raise SystemExit(main())

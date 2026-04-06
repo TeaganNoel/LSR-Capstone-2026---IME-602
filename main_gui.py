@@ -14,8 +14,8 @@ from import_scripts import ImportCSV_GUI
 from formatting_scripts import Dataq_MycronFormatting_GUI
 from formatting_scripts import ExcelToCSV_GUI
 from formatting_scripts import KestralFormatting_GUI
-#from formatting_scripts import dataq_parse_GUI
-#from formatting_scripts import aim_parse_segments_GUI
+from formatting_scripts import dataq_parse_GUI
+from formatting_scripts import aim_parse_segments_GUI
 
 from GUI_scripts import IDNameKeyGenerator_GUI
 
