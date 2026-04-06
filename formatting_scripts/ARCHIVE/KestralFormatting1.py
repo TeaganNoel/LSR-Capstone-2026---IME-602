@@ -1,7 +1,7 @@
 #Author: Mason Allen
 #Description: Converts original Kestral csv to csv formatted for data input
 #Created Date: 3/1/2026
-#Last Updated Date: 3/1/2026
+#Last Updated Date: 4/3/2026
 
 import csv
 import mysql.connector

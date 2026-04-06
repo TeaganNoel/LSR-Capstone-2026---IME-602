@@ -61,7 +61,7 @@ def get_table_names(connection, database_name):
 def get_ID_name_cols(connection, database_name, table_name):
     cursor = connection.cursor()
     
-        # Step 1: get first column name
+        
     query = """
         SELECT COLUMN_NAME
         FROM information_schema.columns
