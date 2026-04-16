@@ -7,6 +7,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import messagebox
+from pathlib import Path
 
 
 def form_entry(parent):
@@ -169,5 +170,36 @@ def run(parent):
         return
 
     df.to_csv(output_path, index=False)
+
+    messagebox.showinfo("Success", "CSV file created successfully!", parent=parent)
+
+# 🔹 RUN ALL ENTRY POINT
+def run_auto(parent, file_path, folder_path):
+
+    # Step 1: file selection
+    kestrel_file = Path(file_path)
+    if not kestrel_file:
+        return
+
+    # Step 2: form input
+    result = form_entry(parent)
+    if not result or not result["data"]:
+        return
+
+    testID, deviceID, samplingrate = result["data"]
+
+    # Step 3: process
+    try:
+        df = csv_to_df(kestrel_file, deviceID, testID, samplingrate)
+    except Exception as err:
+        messagebox.showerror("Error", f"Processing failed:\n{err}", parent=parent)
+        return
+
+    # Step 4: save file
+    output_folder = Path(folder_path)
+    if not output_folder:
+        return
+
+    df.to_csv(output_folder, index=False)
 
     messagebox.showinfo("Success", "CSV file created successfully!", parent=parent)

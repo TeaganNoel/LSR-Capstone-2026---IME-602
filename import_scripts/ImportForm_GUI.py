@@ -117,9 +117,13 @@ def import_data(connection, table_name, df):
         connection.commit()
 
         print("Data imported successfully")
+        
+        return True
 
     except Exception as err:
         print(f"Import failed: {err}")
+
+        return False
 
     cursor.close()
 
@@ -131,7 +135,7 @@ def run(parent, connection, database_name):
 
     table_name = choose_table_window(parent, tables)
     if not table_name:
-        return
+        return False
 
     schema = get_table_schema(connection, database_name, table_name)
 
@@ -140,4 +144,23 @@ def run(parent, connection, database_name):
     df = form_query(parent, fields)
 
     if df is not None:
-        import_data(connection, table_name, df)
+        return import_data(connection, table_name, df), table_name
+    else:
+        return False
+    
+def run_auto(parent, connection, database_name, table):
+
+    #tables = get_table_names(connection, database_name)
+
+    table_name = table
+    if not table_name:
+        return False
+
+    schema = get_table_schema(connection, database_name, table_name)
+
+    fields = build_fields_from_schema(schema)
+
+    df = form_query(parent, fields)
+
+    if df is not None:
+        return import_data(connection, table_name, df)

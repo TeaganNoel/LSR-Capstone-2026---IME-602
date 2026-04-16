@@ -96,3 +96,63 @@ def run(parent):
         f"CSV files created:\n\n" + "\n".join(created_files),
         parent=parent
     )
+
+
+def run_auto(parent, file_path, folder_path):
+
+    # Step 1: select Excel file
+    excel_file = file_path
+    if not excel_file:
+        return
+
+    # Step 2: choose output folder
+    output_folder = Path(folder_path)
+    if not output_folder:
+        return
+
+
+    # Step 3: load Excel file
+    try:
+        xls = pd.ExcelFile(excel_file)
+    except Exception as err:
+        messagebox.showerror("Error", f"Failed to open Excel file:\n{err}", parent=parent)
+        return
+
+    # Step 4: filter sheets
+    export_sheets = [s for s in xls.sheet_names if s.startswith("Export_CSV_")]
+
+    if not export_sheets:
+        messagebox.showwarning(
+            "No Sheets Found",
+            "No sheets starting with 'Export_CSV_' were found.",
+            parent=parent
+        )
+        return
+
+    # Step 5: timestamp
+    #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    created_files = []
+
+    try:
+        for sheet in export_sheets:
+            df = pd.read_excel(xls, sheet_name=sheet)
+
+            # remove prefix for cleaner filename
+            prefix = sheet.replace("Export_CSV_", "")
+
+            csv_file = output_folder / f"{prefix}.csv"
+            df.to_csv(csv_file, index=False)
+
+            created_files.append(str(csv_file))
+
+    except Exception as err:
+        messagebox.showerror("Error", f"Failed during conversion:\n{err}", parent=parent)
+        return
+
+    # Step 6: success message
+    messagebox.showinfo(
+        "Success",
+        f"CSV files created:\n\n" + "\n".join(created_files),
+        parent=parent
+    )    

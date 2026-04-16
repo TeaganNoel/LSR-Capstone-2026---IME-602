@@ -1,7 +1,7 @@
 #Author: Mason Allen
 #Description: Made for connection with Main GUI. Imports a selected csv into a table in MySQL using mysql.connector
-#Created Date: 4/5/2026
-#Last Updated Date: 4/5/2026
+#Created Date: 4/9/2026
+#Last Updated Date: 4/9/2026
 
 import mysql.connector
 from tkinter import filedialog as fd
@@ -41,7 +41,8 @@ def build_fields_from_schema(schema_rows):
 
     return fields
 
-def choose_table_window(parent, tables):
+#NOT USED IN THIS VERSION
+#def choose_table_window(parent, tables):
     window = tk.Toplevel(parent)
     window.title("Select Table")
 
@@ -62,8 +63,10 @@ def parse_date(value):
 def parse_date_time(value):
     return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
 
+
+#NOT USED IN THIS VERSION
 #prompts user with a file selection window to choose a CSV. Converts CSV to a long dataframe format
-def open_file_selection(parent):
+#def open_file_selection(parent):
    
     #try opening file and converting to df. Throw error message on exception
     try:
@@ -73,7 +76,7 @@ def open_file_selection(parent):
         if not file_path:
             print("No file sected, exiting script...")
             return None
-            #exit()
+            
 
     except ImportError:
         print("Please install openpyxl: pip install openpyxl")
@@ -102,13 +105,6 @@ def import_data(connection, table_name, df):
 
     try: 
         
-        # Convert NaN to None for MySQL
-        #df = df.where(pd.notnull(df), None)  #<-- DELETE?
-        #df = df.where(df=="", None)
-        #df = df.replace({pd.NA: None})
-        #print(df.columns.tolist())
-        #df.columns = df.columns.astype(str)
-        #df = df.fillna("")
 
         df = df.where(pd.notnull(df), None)
         df.columns = df.columns.astype(str)
@@ -147,7 +143,7 @@ def import_data(connection, table_name, df):
     cursor.close()
 
 # 🔹 MAIN ENTRY POINT
-def run(parent, connection, database_name):
+def run(parent, connection, database_name, file_path, table_name):
 
     # 1️⃣ Get tables
     tables = get_table_names(connection, database_name)
@@ -159,7 +155,7 @@ def run(parent, connection, database_name):
         return None
 
     # 3️⃣ Get schema
-    #schema = get_table_schema(connection, database_name, table_name)
+    schema = get_table_schema(connection, database_name, table_name)
 
     # 4️⃣ Build fields dynamically
     #fields = build_fields_from_schema(schema) NOT USED

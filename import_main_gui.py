@@ -12,10 +12,11 @@ from db.connection import get_connection
 
 from import_scripts import ImportForm_GUI
 from import_scripts import ImportCSV_GUI
+from import_scripts import RunAll_GUI
 
 from formatting_scripts import Dataq_MycronFormatting_GUI
 from formatting_scripts import ExcelToCSV_GUI
-from formatting_scripts import KestralFormatting_GUI
+from formatting_scripts import KestrelFormatting_GUI
 from formatting_scripts import dataq_parse_GUI
 from formatting_scripts import aim_parse_segments_GUI
 from formatting_scripts import datalog_sync_master_GUI
@@ -55,7 +56,7 @@ def open_format_exceltocsv():
     ExcelToCSV_GUI.run(root)
 
 def open_format_kestral():
-    KestralFormatting_GUI.run(root)
+    KestrelFormatting_GUI.run(root)
 
 def open_format_dataqmychronmerge():
     Dataq_MycronFormatting_GUI.run(root)
@@ -69,6 +70,9 @@ def open_format_mychronparse():
 def open_format_dataqmychronmerge():
     datalog_sync_master_GUI.run(root)
 
+def open_runall():
+    RunAll_GUI.run(root, connection, "lsr_testing_database")
+    return
 
 #top frame
 f1 = ttk.Frame(root)
@@ -92,7 +96,7 @@ ttk.Separator(root, orient='horizontal', bootstyle=LIGHT).pack(fill='x', padx=10
 lf1 = ttk.Labelframe(root, text = "Full Field Day Pre-processing", bootstyle=LIGHT)
 lf1.pack(fill='both', expand=True, padx = x1, pady = y1)
 
-ttk.Button(lf1, text = "Run All", bootstyle = SUCCESS).pack(fill="x",side='left',expand=True, padx = x1, pady = y1,anchor="n")
+ttk.Button(lf1, text = "Run All", command=open_runall, bootstyle = SUCCESS).pack(fill="x",side='left',expand=True, padx = x1, pady = y1,anchor="n")
 ttk.Label(lf1, text="Description of runall", bootstyle=LIGHT).pack(fill="x",side='right',expand=True, padx = x1, pady = y1,anchor="n")
 
 
