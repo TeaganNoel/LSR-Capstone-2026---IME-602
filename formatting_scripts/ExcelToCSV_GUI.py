@@ -1,7 +1,7 @@
 #Author: Mason Allen
 #Description: Made for use in main GUI. Creates and exports CSV files from specified Excel sheets 
 #Created Date: 4/5/2026
-#Last Updated Date: 4/5/2026
+#Last Updated Date: 4/21/2026
 
 import pandas as pd
 from tkinter import filedialog as fd
@@ -76,7 +76,7 @@ def run(parent):
 
     try:
         for sheet in export_sheets:
-            df = pd.read_excel(xls, sheet_name=sheet)
+            df = pd.read_excel(xls, sheet_name=sheet, dtype=str)
 
             # remove prefix for cleaner filename
             prefix = sheet.replace("Export_CSV_", "")
@@ -136,7 +136,7 @@ def run_auto(parent, file_path, folder_path):
 
     try:
         for sheet in export_sheets:
-            df = pd.read_excel(xls, sheet_name=sheet)
+            df = pd.read_excel(xls, sheet_name=sheet,dtype=str)
 
             # remove prefix for cleaner filename
             prefix = sheet.replace("Export_CSV_", "")

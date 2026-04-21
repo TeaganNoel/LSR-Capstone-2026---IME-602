@@ -3,7 +3,7 @@
 #Author: Mason Allen
 #Description: Made for connection with Main GUI. Imports a selected csv into a table in MySQL using mysql.connector
 #Created Date: 4/5/2026
-#Last Updated Date: 4/15/2026
+#Last Updated Date: 4/21/2026
 
 import mysql.connector
 import pandas as pd
@@ -16,7 +16,7 @@ import argparse
 # ----------------------------- HELPERS ----------------------------- #
 
 def csv_to_df(file_path):
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, dtype=str)
 
     print("\nLoaded DataFrame:\n", df, "\n")
 
@@ -24,7 +24,7 @@ def csv_to_df(file_path):
 
 
 # ----------------------------- CORE IMPORT ----------------------------- #
-def import_data(connection, table_name, df, parent=None):
+def import_dataOLD(connection, table_name, df, parent=None):
     cursor = connection.cursor()
 
     try:
@@ -90,7 +90,7 @@ def import_data(connection, table_name, df, parent=None):
         cursor.close()
 
 
-def import_data_OLD(connection, table_name, df, parent=None):
+def import_data_OLDER(connection, table_name, df, parent=None):
     cursor = connection.cursor()
 
     try:
@@ -131,6 +131,86 @@ def import_data_OLD(connection, table_name, df, parent=None):
     
     finally:
         cursor.close()
+
+#newest version with NaN handling
+def import_data(connection, table_name, df, parent=None):
+    cursor = connection.cursor()
+
+    try:
+        # 🔹 Clean null-like values (important for dtype=str workflow)
+        df = df.replace("nan", None)
+        df = df.replace("", None)
+
+        # 🔹 Convert NaN properly to None (robust)
+        df = df.astype(object).where(pd.notnull(df), None)
+
+        # 🔹 Ensure column names are strings
+        df.columns = df.columns.astype(str)
+
+        print("Final columns being sent to SQL:", df.columns.tolist())
+
+        # ---- BUILD INSERT STATEMENT ----
+        columns = ', '.join(df.columns)
+        placeholders = ', '.join(['%s'] * len(df.columns))
+        sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+
+        # ---- FAST DATA CONVERSION ----
+        data = list(df.itertuples(index=False, name=None))
+
+        # ---- EXECUTE BULK INSERT ----
+        cursor.executemany(sql, data)
+        connection.commit()
+
+        print("Data imported successfully")
+
+        if parent:
+            messagebox.showinfo("Success", "Data imported successfully", parent=parent)
+
+        return True
+
+    except mysql.connector.DataError as err:
+        print(f"Wrong data type in CSV. Error type {err}")
+
+        if parent:
+            messagebox.showerror("Data Error", str(err), parent=parent)
+
+        return False
+
+    except mysql.connector.IntegrityError as err:
+        print(f"Importing data would affect relational integrity, data import was aborted. Error type {err}")
+
+        if parent:
+            messagebox.showerror("Integrity Error", str(err), parent=parent)
+
+        return False
+
+    except mysql.connector.ProgrammingError as err:
+        print(f"An error is present in your SQL syntax, data import was aborted. Error type {err}")
+
+        if parent:
+            messagebox.showerror("SQL Error", str(err), parent=parent)
+
+        return False
+
+    except mysql.connector.Error as err:
+        print(f"Something went wrong, data import was aborted. Error type: {err}")
+
+        if parent:
+            messagebox.showerror("Database Error", str(err), parent=parent)
+
+        return False
+
+    except Exception as err:
+        print(f"Unexpected error: {err}")
+
+        if parent:
+            messagebox.showerror("Error", str(err), parent=parent)
+
+        return False
+
+    finally:
+        cursor.close()
+
 
 
 # ----------------------------- MAIN RUN FUNCTION ----------------------------- #

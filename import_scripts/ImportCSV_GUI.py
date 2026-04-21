@@ -1,7 +1,7 @@
 #Author: Mason Allen
 #Description: Made for connection with Main GUI. Imports a selected csv into a table in MySQL using mysql.connector
 #Created Date: 4/5/2026
-#Last Updated Date: 4/5/2026
+#Last Updated Date: 4/21/2026
 
 import mysql.connector
 from tkinter import filedialog as fd
@@ -75,6 +75,8 @@ def open_file_selection(parent):
             return None
             #exit()
 
+        
+
     except ImportError:
         print("Please install openpyxl: pip install openpyxl")
         exit()
@@ -88,10 +90,13 @@ def open_file_selection(parent):
 
 
 def csv_to_df(file_path):
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, dtype=str)
 
     print()
     print("df:",df)
+    print()
+    #debug
+    print("RAW columns:", list(df.columns))
     print()
 
     return df
@@ -110,7 +115,15 @@ def import_data(connection, table_name, df):
         #df.columns = df.columns.astype(str)
         #df = df.fillna("")
 
-        df = df.where(pd.notnull(df), None)
+        #df = df.where(pd.notnull(df), None)
+
+        # Clean null-like values
+        df = df.replace("nan", None)
+        df = df.replace("", None)
+
+        # Convert NaN properly to None (robust)
+        df = df.astype(object).where(pd.notnull(df), None)
+
         df.columns = df.columns.astype(str)
 
         # ---- BUILD INSERT STATEMENT ----

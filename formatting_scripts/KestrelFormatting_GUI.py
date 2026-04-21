@@ -79,10 +79,25 @@ def open_file_selection(parent):
     return file_path
 
 
-def csv_to_df(file_path, deviceID, testID, samplingrate):
+def csv_to_df(file_path, testID):
 
     df_values = pd.read_csv(file_path, skiprows=[0,1,2,4])
     df_meta = pd.read_csv(file_path, header=None, nrows=3)
+
+    # Convert datetime column
+    df_values["FORMATTED DATE_TIME"] = pd.to_datetime(df_values["FORMATTED DATE_TIME"], errors="coerce")
+
+    # Drop bad rows if needed
+    df_values = df_values.dropna(subset=["FORMATTED DATE_TIME"])
+
+    # Detect sampling rate from first two timestamps
+    if len(df_values) >= 2:
+        delta = df_values["FORMATTED DATE_TIME"].iloc[1] - df_values["FORMATTED DATE_TIME"].iloc[0]
+        samplingrate = 1 / delta.total_seconds()
+    else:
+        samplingrate = None
+
+    print("Detected sampling rate:", samplingrate)
 
     name = df_meta.iloc[0, 1]
     model = df_meta.iloc[1, 1]
@@ -98,8 +113,10 @@ def csv_to_df(file_path, deviceID, testID, samplingrate):
     df_values["devicename"] = name
     df_values["devicemodel"] = model
     df_values["serialnum"] = serialnum
-    df_values["deviceID"] = deviceID
+    df_values["deviceID"] = "001"
     df_values["testID"] = testID
+    df_values["deviceID"] = df_values["deviceID"].astype("string")
+    df_values["testID"] = df_values["testID"].astype("string")
     
 #new column fixes
     df_values["samplingrate"] = samplingrate
@@ -203,3 +220,21 @@ def run_auto(parent, file_path, folder_path):
     df.to_csv(output_folder, index=False)
 
     messagebox.showinfo("Success", "CSV file created successfully!", parent=parent)
+
+
+def run_auto_noform(file_path, folder_path, testID, parent=None):
+    
+    try:
+        df = csv_to_df(file_path, testID)
+    
+    except Exception as err:
+        if parent:
+            messagebox.showerror("Error", f"Processing failed:\n{err}", parent=parent)
+        return None
+
+    output_folder = Path(folder_path)
+    output_file = output_folder / f"kestrel_{testID}.csv"
+
+    df.to_csv(output_file, index=False)
+
+    return output_file

@@ -9,6 +9,7 @@ from tkinter import messagebox
 from pathlib import Path
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+import re
 
 from import_scripts import ImportCSVSpecific_GUI
 from import_scripts import ImportForm_GUI
@@ -102,15 +103,15 @@ def ask_vehicle(parent):
     tk.Label(win, text="Which vehicle was used?").pack(padx=20, pady=10)
 
     def choose_derbi():
-        result["value"] = True
+        result["value"] = "d"
         win.destroy()
 
     def choose_aprilia():
-        result["value"] = False
+        result["value"] = "a"
         win.destroy()
     
     def choose_none():
-        result["value"] = None
+        result["value"] = "n"
         win.destroy()
 
     tk.Button(win, text="Derbi", command=choose_derbi).pack(fill="x", padx=20, pady=5)
@@ -168,6 +169,10 @@ def show_summary(parent, imported_tables, aborted=False):
     win.transient(parent)
     win.grab_set()
     parent.wait_window(win)
+
+def extract_test_id(filename):
+    match = re.search(r"kestrel_original_(\w+)", filename.stem)
+    return match.group(1) if match else None
 
 # 🔹 MAIN ENTRY POINT
 def run(parent, connection, database_name):
@@ -228,6 +233,12 @@ def run(parent, connection, database_name):
             folder_path
         )
 
+        #Import configuration tbl
+        file_path = folder_path / "configuration.csv"
+        table_name = "configuration"
+        #ImportCSVSpecific_GUI_old.run(parent, connection, database_name, file_path, table_name)
+        csv_import(parent, connection, database_name, file_path, table_name, ctx)
+
         #Import test tbl
         file_path = folder_path / "test.csv"
         table_name = "test"
@@ -237,12 +248,6 @@ def run(parent, connection, database_name):
         #Import external media tbl
         file_path = folder_path / "media.csv"
         table_name = "external_media"
-        #ImportCSVSpecific_GUI_old.run(parent, connection, database_name, file_path, table_name)
-        csv_import(parent, connection, database_name, file_path, table_name, ctx)
-        
-        #Import configuration tbl
-        file_path = folder_path / "configuration.csv"
-        table_name = "configuration"
         #ImportCSVSpecific_GUI_old.run(parent, connection, database_name, file_path, table_name)
         csv_import(parent, connection, database_name, file_path, table_name, ctx)
         
@@ -306,7 +311,7 @@ def run(parent, connection, database_name):
         csv_import(parent, connection, database_name, file_path, table_name, ctx)
         
         answer = ask_vehicle(parent)
-        if answer:
+        if answer == "d":
             #Merge DataQ & MyChron files
             #datalog_sync_master_GUI.run(parent)
 
@@ -319,7 +324,7 @@ def run(parent, connection, database_name):
             csv_import(parent, connection, database_name, file_path, table_name, ctx)
 
 
-        elif not answer:
+        elif answer == "a":
             print("Will run Maxx ECU merge")
             print("Then will run Maxx ECU import")
 
@@ -333,17 +338,59 @@ def run(parent, connection, database_name):
             parent=parent
         )
 
-        if answer:
-            #Format Kestral CSV
-            file_path = folder_path / "kestrel_original.csv"
-            KestrelFormatting_GUI.run_auto(parent, file_path, folder_path)
+        #OLD Kestrel Import logic (single file import)
+        ####################
+        #if answer:
+        #    #Format Kestral CSV
+        #    file_path = folder_path / "kestrel_original.csv"
+        #    KestrelFormatting_GUI.run_auto(parent, file_path, folder_path)
             
             #Import Kestral tbl
-            file_path = folder_path / "kestrel.csv"
-            table_name = "kestrel_data"
+        #    file_path = folder_path / "kestrel.csv"
+        #    table_name = "kestrel_data"
             #ImportCSVSpecific_GUI_old.run(parent, connection, database_name, file_path, table_name)
-            csv_import(parent, connection, database_name, file_path, table_name, ctx)
-        
+        #    csv_import(parent, connection, database_name, file_path, table_name, ctx)
+        ###############################################
+
+        #NEW Kestrel Import Logic (multiple)
+        if answer:
+            kestrel_files = list(folder_path.glob("kestrel_original_*.csv"))
+
+            if not kestrel_files:
+                messagebox.showwarning("No Files", "No Kestrel files found.", parent=parent)
+            else:
+
+                for file_path in kestrel_files:
+                    testID = extract_test_id(file_path)
+
+                    if not testID:
+                        print(f"Skipping file (no testID found): {file_path}")
+                        continue
+
+                    print(f"Processing Kestrel file: {file_path} with testID={testID}")
+
+                    output_file = KestrelFormatting_GUI.run_auto_noform(
+                        file_path,
+                        folder_path,
+                        testID,
+                        parent
+                    )
+
+                    if output_file:
+                        table_name = "kestrel_data"
+
+                        success = csv_import(
+                            parent,
+                            connection,
+                            database_name,
+                            output_file,
+                            table_name,
+                            ctx
+                        )
+
+                        if success:
+                            ctx.imported_tables.append(f"{table_name} ({testID})")
+
         show_summary(parent, ctx.imported_tables, aborted=False)
         #messagebox.showinfo("Import Complete", "Import complete, press ok to return to main menu", parent=parent)
 
