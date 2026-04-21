@@ -21,9 +21,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import aim_parse_segments as aim
-import dataq_parse as dq
-import sync_merge as sm
+from formatting_scripts import aim_parse_segments as aim
+from formatting_scripts import dataq_parse as dq
+from formatting_scripts import sync_merge as sm
 
 
 def cmd_inspect(aim_csv: Path, dataq_csv: Path) -> int:

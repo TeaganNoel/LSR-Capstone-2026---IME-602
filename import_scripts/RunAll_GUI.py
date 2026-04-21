@@ -15,7 +15,7 @@ from import_scripts import ImportCSVSpecific_GUI
 from import_scripts import ImportForm_GUI
 from import_scripts import ImportCSV_GUI
 
-from formatting_scripts import Dataq_MycronFormatting_GUI
+from formatting_scripts import Dataq_MychronFormatting_GUI
 from formatting_scripts import ExcelToCSV_GUI
 from formatting_scripts import KestrelFormatting_GUI
 from formatting_scripts import dataq_parse_GUI
@@ -94,6 +94,31 @@ def run_form_loop_condition(parent, connection, table, ctx):
     if again:
         run_form_loop_condition(parent, connection, table, ctx)
 
+def ask_import_setup(parent):
+    result = {"value": None}
+
+    win = tk.Toplevel(parent)
+    win.title("Import Type Selection")
+
+    tk.Label(win, text="Are you trying to import a single XLSX file, or multiple CSVs?").pack(padx=20, pady=10)
+
+    def choose_xlsx():
+        result["value"] = "x"
+        win.destroy()
+
+    def choose_csv():
+        result["value"] = "c"
+        win.destroy()
+
+    tk.Button(win, text="XLSX", command=choose_xlsx).pack(fill="x", padx=20, pady=5)
+    tk.Button(win, text="CSVs", command=choose_csv).pack(fill="x", padx=20, pady=5)
+
+    win.transient(parent)
+    win.grab_set()
+    parent.wait_window(win)
+
+    return result["value"]
+
 def ask_vehicle(parent):
     result = {"value": None}
 
@@ -121,6 +146,8 @@ def ask_vehicle(parent):
     win.transient(parent)
     win.grab_set()
     parent.wait_window(win)
+
+    return result["value"]
 
 def csv_import(parent, connection, db, file, table, ctx):
     success = ImportCSVSpecific_GUI.run(parent, connection, db, file, table)
@@ -170,8 +197,12 @@ def show_summary(parent, imported_tables, aborted=False):
     win.grab_set()
     parent.wait_window(win)
 
-def extract_test_id(filename):
+def extract_test_id_kestrel(filename):
     match = re.search(r"kestrel_original_(\w+)", filename.stem)
+    return match.group(1) if match else None
+
+def extract_test_id_dataq_mychron(filename):
+    match = re.search(r"dq_my_or_(\w+)", filename.stem)
     return match.group(1) if match else None
 
 # 🔹 MAIN ENTRY POINT
@@ -312,16 +343,67 @@ def run(parent, connection, database_name):
         
         answer = ask_vehicle(parent)
         if answer == "d":
-            #Merge DataQ & MyChron files
-            #datalog_sync_master_GUI.run(parent)
+            
+            answer = ask_import_setup(parent)
+            if answer == "x":
+                
+                messagebox.showwarning("Under Construction", "Single Excel import is not functional yet. Skipping datalogger entry...", parent=parent)
+                return
+                #Merge DataQ & MyChron files
+                datalog_sync_master_GUI.run_auto(parent, folder_path)
 
-            #Format merged CSV
-            #Dataq_MycronFormatting_GUI.run(parent)
+                #Extract individual test csvs from excel
+                file_path = folder_path / "dataq_mychron_merge.xlsx"
+                ExcelToCSV_GUI.run_auto(
+                    parent,
+                    file_path,
+                    folder_path
+                )
 
-            #Import condition tbl
-            file_path = folder_path / "dataq_mychron3_data.csv"
-            table_name = "dataq_mychron3_data"
-            csv_import(parent, connection, database_name, file_path, table_name, ctx)
+            if answer == "c":
+                data_files = list(folder_path.glob("dq_my_or_*.csv"))
+
+                if not data_files:
+                    messagebox.showwarning("No Files", "No DataQ-Mychron files found.", parent=parent)
+                else:
+
+                    for file_path in data_files:
+                        testID = extract_test_id_dataq_mychron(file_path)
+
+                        if not testID:
+                            print(f"Skipping file (no testID found): {file_path}")
+                            continue
+
+                        print(f"Processing Dataq-Mychron file: {file_path} with testID={testID}")
+
+                        output_file = Dataq_MychronFormatting_GUI.run_auto_noform(
+                            file_path,
+                            folder_path,
+                            testID,
+                            parent
+                        )
+
+                        if output_file:
+                            table_name = "dataq_mychron3_data"
+
+                            success = csv_import(
+                                parent,
+                                connection,
+                                database_name,
+                                output_file,
+                                table_name,
+                                ctx
+                            )
+
+                            if success:
+                                ctx.imported_tables.append(f"{table_name} ({testID})")
+
+
+                #OLD
+                #Import condition tbl
+                #file_path = folder_path / "dataq_mychron3_data.csv"
+                #table_name = "dataq_mychron3_data"
+                #csv_import(parent, connection, database_name, file_path, table_name, ctx)
 
 
         elif answer == "a":
@@ -361,7 +443,7 @@ def run(parent, connection, database_name):
             else:
 
                 for file_path in kestrel_files:
-                    testID = extract_test_id(file_path)
+                    testID = extract_test_id_kestrel(file_path)
 
                     if not testID:
                         print(f"Skipping file (no testID found): {file_path}")

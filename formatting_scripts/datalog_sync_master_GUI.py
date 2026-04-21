@@ -118,6 +118,38 @@ def run(parent):
     messagebox.showinfo("Success", "Operation complete. See console output.", parent=parent)
 
 
+# 🔹 RUN ALL ENTRY POINT
+def run_auto(parent, folder_name):
+    """
+    GUI wrapper for Toplevel-based execution.
+    Keeps all core logic intact.
+    """
+    folder_path = Path(folder_name)
+
+    aim_file = folder_path / "mychron.csv"
+    dataq_file = folder_path / "dataq.csv"
+
+
+    # Ask user which action
+    action = "No"
+
+    try:
+        if action == "yes":
+            cmd_inspect(Path(aim_file), Path(dataq_file))
+
+        else:
+            out_file = folder_path / "dataq_mychron_merge.xlsx"
+            cmd_merge(Path(aim_file), Path(dataq_file), Path(out_file))
+
+    except Exception as e:
+        messagebox.showerror("Error", str(e), parent=parent)
+        return
+
+    messagebox.showinfo("Success", "Operation complete. See console output.", parent=parent)
+
+
+
+
 # ----------------------------- CLI entry point ----------------------------- #
 
 def main() -> int:

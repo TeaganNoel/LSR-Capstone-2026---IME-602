@@ -14,7 +14,7 @@ from import_scripts import ImportForm_GUI
 from import_scripts import ImportCSV_GUI
 from import_scripts import RunAll_GUI
 
-from formatting_scripts import Dataq_MycronFormatting_GUI
+from formatting_scripts import Dataq_MychronFormatting_GUI
 from formatting_scripts import ExcelToCSV_GUI
 from formatting_scripts import KestrelFormatting_GUI
 from formatting_scripts import dataq_parse_GUI
@@ -58,8 +58,8 @@ def open_format_exceltocsv():
 def open_format_kestral():
     KestrelFormatting_GUI.run(root)
 
-def open_format_dataqmychronmerge():
-    Dataq_MycronFormatting_GUI.run(root)
+def open_format_dataqmychronformat():
+    Dataq_MychronFormatting_GUI.run(root)
 
 def open_format_dataqparse():
     dataq_parse_GUI.run(root)
@@ -139,7 +139,7 @@ ttk.Button(lf2, text="Extract CSVs from Excel", command=open_format_exceltocsv, 
 
 ttk.Button(lf2, text="Format Kestral CSV", command=open_format_kestral, bootstyle=PRIMARY).pack(fill='x', padx = x1, pady = y1)
 
-ttk.Button(lf2, text="Format DataQ-MyChron CSV", command=open_format_dataqmychronmerge, bootstyle=PRIMARY).pack(fill='x', padx = x1, pady = y1)
+ttk.Button(lf2, text="Format DataQ-MyChron CSV", command=open_format_dataqmychronformat, bootstyle=PRIMARY).pack(fill='x', padx = x1, pady = y1)
 ttk.Button(lf2, text="Parse DataQ Data", command=open_format_dataqmychronmerge, bootstyle=PRIMARY).pack(fill='x', padx = x1, pady = y1)
 ttk.Button(lf2, text="Parse MyChron Data", command=open_format_dataqmychronmerge, bootstyle=PRIMARY).pack(fill='x', padx = x1, pady = y1)
 ttk.Button(lf2, text="Merge DataQ & MyChron Data", command=open_format_dataqmychronmerge, bootstyle=PRIMARY).pack(fill='x', padx = x1, pady = y1)
