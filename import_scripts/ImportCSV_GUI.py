@@ -157,7 +157,8 @@ def import_data(connection, table_name, df):
     except mysql.connector.Error as err:
         print(f"Something went wrong, data import was aborted. Error type: {err}")
 
-    cursor.close()
+    finally:
+        cursor.close()
 
 # 🔹 MAIN ENTRY POINT
 def run(parent, connection, database_name):
@@ -186,7 +187,7 @@ def run(parent, connection, database_name):
 
     if df is not None:
         import_data(connection, table_name, df)
-
+    
     print("Selected Table:", table_name)
     print(df)
 

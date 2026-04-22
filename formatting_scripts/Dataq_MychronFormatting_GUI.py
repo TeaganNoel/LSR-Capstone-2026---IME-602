@@ -193,7 +193,7 @@ def run_auto_noform(file_path, folder_path, testID, parent=None):
         return None
 
     output_folder = Path(folder_path)
-    output_file = output_folder / f"kestrel_{testID}.csv"
+    output_file = output_folder / f"dataq_mychron_{testID}.csv"
 
     df.to_csv(output_file, index=False)
 
