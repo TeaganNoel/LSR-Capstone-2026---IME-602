@@ -1,10 +1,9 @@
 #Author: Mason Allen
 #Description: Made for connection with Main GUI. Generates a table of ID-Key relations for quick reference from database
 #Created Date: 4/4/2026
-#Last Updated Date: 4/4/2026
+#Last Updated Date: 4/23/2026
 
 import pandas as pd
-import mysql.connector
 import tkinter as tk
 from tkinter import ttk
 

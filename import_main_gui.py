@@ -22,6 +22,7 @@ from formatting_scripts import aim_parse_segments_GUI
 from formatting_scripts import datalog_sync_master_GUI
 
 from info_scripts import IDNameKeyGenerator_GUI
+from info_scripts import LastIDGenerator_GUI
 
 connection = get_connection()
 
@@ -72,6 +73,10 @@ def open_format_dataqmychronmerge():
 
 def open_runall():
     RunAll_GUI.run(root, connection, "lsr_testing_database")
+    return
+
+def open_info_lastID():
+    LastIDGenerator_GUI.run(root, connection, "lsr_testing_database")
     return
 
 #top frame
@@ -132,7 +137,8 @@ ttk.Button(lf3, text="CSV Import", command=open_import_csv, bootstyle=INFO).pack
 #.grid(row=2,column=0,padx=x1,pady=y1,sticky="nsew")
 ttk.Button(lf4, text="View ID-Name Key", command=open_GUI_idnametool, bootstyle=SECONDARY).pack(fill='x', padx = x1, pady = y1)
 ttk.Button(lf4, text="View Database Schema", bootstyle=SECONDARY).pack(fill='x', padx = x1, pady = y1)
-#.grid(row=1,column=2,padx=x1,pady=y1,sticky="nsew")
+ttk.Button(lf4, text="View Last/Next ID", command=open_info_lastID, bootstyle=SECONDARY).pack(fill='x', padx = x1, pady = y1)
+
 
 
 ttk.Button(lf2, text="Extract CSVs from Excel", command=open_format_exceltocsv, bootstyle=PRIMARY).pack(fill='x', padx = x1, pady = y1)

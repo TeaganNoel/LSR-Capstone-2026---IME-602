@@ -1,7 +1,7 @@
 #Author: Mason Allen
 #Description: For use in main GUI. Converts generated DataQ MyChron3 xlsx to csv formatted for data input
 #Created Date: 4/5/2026
-#Last Updated Date: 4/5/2026
+#Last Updated Date: 4/22/2026
 
 import pandas as pd
 import tkinter as tk
@@ -64,8 +64,8 @@ def open_file_selection(parent):
 
 def csv_to_df(file_path, testID):
 
-    df_values = pd.read_csv(file_path)
-    df_meta = pd.read_csv(file_path, header=None, nrows=3)
+    df_values = pd.read_csv(file_path, encoding="latin1")
+    #df_meta = pd.read_csv(file_path, header=None, nrows=3)
 
     # Convert datetime column
     #df_values["Time sec"] = pd.to_datetime(df_values["Time sec"], errors="coerce")
@@ -91,7 +91,7 @@ def csv_to_df(file_path, testID):
     df_values["samplingrate"] = samplingrate
 
     try:
-        df_values = df_values.drop(columns=['n/c Volt','n/c Volt.1'])
+        df_values = df_values.drop(columns=['n/c Volt'])
     except:
         return
 
@@ -100,15 +100,20 @@ def csv_to_df(file_path, testID):
         "Distance km": "my_dist_kft",
         "Engine rpm": "my_rpm",
         "Speed_1 mph": "my_mph",
-        "Channel_1 °F": "my_h2o_f",
-        "Channel_2 °F": "my_egt_f",
+        "H2O Exit Â°F": "my_h2o_f",
+        "EGT Â°F": "my_egt_f",
         "CHT F": "dq_cht_f",
         "Tank T F": "dq_tank_f",
         "Intake T F": "dq_in_air_f",
+        "Engine H20 In T F":"dq_e_h2o_f",
         "Pitot kPa": "dq_pitot_kpa",
         "AFR AFR": "dq_afr",
         "Date": "date_attr",
         "Time": "time_of_day",
+        "Gear #":"my_gear",
+        "Acc_1 g":"my_acc",
+        "Datalogger_Temp Â°F":"my_dl_f",
+        "Battery V":"my_batt_v"
         })
 
     return df
