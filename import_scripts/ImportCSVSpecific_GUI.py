@@ -1,266 +1,251 @@
-#!/usr/bin/env python3
-
+"""
+############################################################################
+#Program Filename: ImportCSVSpecific_GUI.py
 #Author: Mason Allen
-#Description: Made for connection with Main GUI. Imports a selected csv into a table in MySQL using mysql.connector
 #Created Date: 4/5/2026
-#Last Updated Date: 4/21/2026
+#Last Updated Date: 5/15/2026
+#Description: Imports a specific CSV into a specified db table using
+#             mysql.connector. Made for connection with Run All scripts
+#             and automated imports.
+############################################################################
+"""
 
+#import necessary libraries
 import mysql.connector
 import pandas as pd
-import tkinter as tk
 from tkinter import messagebox
-from datetime import datetime
 from pathlib import Path
 import argparse
 
-# ----------------------------- HELPERS ----------------------------- #
 
 def csv_to_df(file_path):
-    df = pd.read_csv(file_path, dtype=str)
+############################################################################
+#Function Name: csv_to_df
+#Description: Reads and converts CSV to dataframe
+#Parameters: file_path --> file path of selected csv
+#Return Values: df --> dataframe of csv data
+############################################################################
+
+    df = pd.read_csv(
+        file_path,
+        dtype=str
+    )
 
     print("\nLoaded DataFrame:\n", df, "\n")
+    print("RAW columns:", list(df.columns))
 
     return df
 
-
-# ----------------------------- CORE IMPORT ----------------------------- #
-def import_dataOLD(connection, table_name, df, parent=None):
-    cursor = connection.cursor()
-
-    try:
-        # Replace NaN values in data
-        df = df.where(pd.notnull(df), None)
-
-        # 🔍 Detect bad columns
-        bad_cols = [
-            col for col in df.columns
-            if pd.isna(col) or str(col).strip() == ""
-        ]
-
-        if bad_cols:
-            print("⚠️ Dropping invalid columns:", bad_cols)
-
-            # Drop them
-            df = df.loc[:, [
-                not (pd.isna(col) or str(col).strip() == "")
-                for col in df.columns
-            ]]
-
-        # Clean remaining column names
-        df.columns = [str(col).strip() for col in df.columns]
-
-        print("Final columns being sent to SQL:", df.columns.tolist())
-
-        # ---- BUILD INSERT STATEMENT ----
-        columns = ', '.join(df.columns)
-        placeholders = ', '.join(['%s'] * len(df.columns))
-        sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
-
-        # ---- FAST DATA CONVERSION ----
-        data = list(df.itertuples(index=False, name=None))
-
-        # ---- EXECUTE BULK INSERT ----
-        cursor.executemany(sql, data)
-        connection.commit()
-
-        print("Data imported successfully")
-
-        if parent:
-            messagebox.showinfo("Success", "Data imported successfully", parent=parent)
-
-        return True
-
-    except mysql.connector.Error as err:
-        print(f"Database error: {err}")
-
-        if parent:
-            messagebox.showerror("Import Failed", str(err), parent=parent)
-
-        return False
-
-    except Exception as err:
-        print(f"Unexpected error: {err}")
-
-        if parent:
-            messagebox.showerror("Error", str(err), parent=parent)
-
-        return False
-
-    finally:
-        cursor.close()
-
-
-def import_data_OLDER(connection, table_name, df, parent=None):
-    cursor = connection.cursor()
-
-    try:
-        df = df.where(pd.notnull(df), None)
-        df.columns = df.columns.astype(str)
-
-        # ---- BUILD INSERT STATEMENT ----
-        columns = ', '.join(df.columns)
-        placeholders = ', '.join(['%s'] * len(df.columns))
-        sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
-
-        # ---- FAST DATA CONVERSION ----
-        data = list(df.itertuples(index=False, name=None))
-
-        # ---- EXECUTE BULK INSERT ----
-        cursor.executemany(sql, data)
-        connection.commit()
-
-        print("Data imported successfully")
-
-        if parent:
-            messagebox.showinfo("Success", "Data imported successfully", parent=parent)
-        return True
-    
-    except mysql.connector.Error as err:
-        print(f"Database error: {err}")
-
-        if parent:
-            messagebox.showerror("Import Failed", str(err), parent=parent)
-        return False
-    
-    except Exception as err:
-        print(f"Unexpected error: {err}")
-
-        if parent:
-            messagebox.showerror("Error", str(err), parent=parent)
-        return False
-    
-    finally:
-        cursor.close()
-
-#newest version with NaN handling
 def import_data(connection, table_name, df, parent=None):
+############################################################################
+#Function Name: import_data
+#Description: Connects to the database using a MySQL Connector cursor and
+#             imports CSV data into the selected table using SQL.
+#Parameters: connection --> MySQL db connection for queries and imports
+#            table_name --> name of table to import into
+#            df --> data frame of values to be imported to the db table
+#            parent --> parent ttk window
+#Return Values: success --> T/F import status
+#               error_msg --> import error text if import fails
+############################################################################
+
     cursor = connection.cursor()
 
     try:
-        # 🔹 Clean null-like values (important for dtype=str workflow)
+
+        # Clean null-like values
         df = df.replace("nan", None)
         df = df.replace("", None)
 
-        # 🔹 Convert NaN properly to None (robust)
-        df = df.astype(object).where(pd.notnull(df), None)
+        # Convert NaN properly to None
+        df = df.astype(object).where(
+            pd.notnull(df),
+            None
+        )
 
-        # 🔹 Ensure column names are strings
+        # Ensure column names are strings
         df.columns = df.columns.astype(str)
 
-        print("Final columns being sent to SQL:", df.columns.tolist())
+        print(
+            "Final columns being sent to SQL:",
+            df.columns.tolist()
+        )
 
-        # ---- BUILD INSERT STATEMENT ----
+        # -----------------------------
+        # Build SQL statement
+        # -----------------------------
         columns = ', '.join(df.columns)
-        placeholders = ', '.join(['%s'] * len(df.columns))
-        sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
 
-        # ---- FAST DATA CONVERSION ----
-        data = list(df.itertuples(index=False, name=None))
+        placeholders = ', '.join(
+            ['%s'] * len(df.columns)
+        )
 
-        # ---- EXECUTE BULK INSERT ----
+        sql = f"""
+            INSERT INTO {table_name}
+            ({columns})
+            VALUES ({placeholders})
+        """
+
+        # -----------------------------
+        # Fast dataframe conversion
+        # -----------------------------
+        data = list(
+            df.itertuples(
+                index=False,
+                name=None
+            )
+        )
+
+        # -----------------------------
+        # Execute SQL import
+        # -----------------------------
         cursor.executemany(sql, data)
+
         connection.commit()
 
         print("Data imported successfully")
 
         if parent:
-            messagebox.showinfo("Success", "Data imported successfully", parent=parent)
+            messagebox.showinfo(
+                "Success",
+                "Data imported successfully",
+                parent=parent
+            )
 
-        return True
+        return True, None
 
     except mysql.connector.DataError as err:
-        print(f"Wrong data type in CSV. Error type {err}")
 
-        if parent:
-            messagebox.showerror("Data Error", str(err), parent=parent)
+        error_msg = (
+            f"Wrong data type in CSV.\n\n"
+            f"Error:\n{err}"
+        )
 
-        return False
+        print(error_msg)
+
+        return False, error_msg
 
     except mysql.connector.IntegrityError as err:
-        print(f"Importing data would affect relational integrity, data import was aborted. Error type {err}")
 
-        if parent:
-            messagebox.showerror("Integrity Error", str(err), parent=parent)
+        error_msg = (
+            "Importing data would affect relational integrity, "
+            f"data import was aborted.\n\nError:\n{err}"
+        )
 
-        return False
+        print(error_msg)
+
+        return False, error_msg
 
     except mysql.connector.ProgrammingError as err:
-        print(f"An error is present in your SQL syntax, data import was aborted. Error type {err}")
 
-        if parent:
-            messagebox.showerror("SQL Error", str(err), parent=parent)
+        error_msg = (
+            "An error is present in your SQL syntax, "
+            f"data import was aborted.\n\nError:\n{err}"
+        )
 
-        return False
+        print(error_msg)
+
+        return False, error_msg
+
+    except FileNotFoundError as err:
+
+        error_msg = (
+            f"File could not be located.\n\nError:\n{err}"
+        )
+
+        print(error_msg)
+
+        return False, error_msg
 
     except mysql.connector.Error as err:
-        print(f"Something went wrong, data import was aborted. Error type: {err}")
 
-        if parent:
-            messagebox.showerror("Database Error", str(err), parent=parent)
+        error_msg = (
+            "Something went wrong, data import was aborted.\n\n"
+            f"Error:\n{err}"
+        )
 
-        return False
+        print(error_msg)
+
+        return False, error_msg
 
     except Exception as err:
-        print(f"Unexpected error: {err}")
 
-        if parent:
-            messagebox.showerror("Error", str(err), parent=parent)
+        error_msg = (
+            f"Unexpected error:\n\n{err}"
+        )
 
-        return False
+        print(error_msg)
+
+        return False, error_msg
 
     finally:
         cursor.close()
 
 
-
-# ----------------------------- MAIN RUN FUNCTION ----------------------------- #
-
-def run(parent, connection, database_name, file_path, table_name):
-    """
-    GUI-safe entry point (no prompts)
-    """
+#RUN ALL / AUTOMATED IMPORT ENTRY
+def run(parent, connection, file_path, table_name):
+############################################################################
+#Function Name: run
+#Description: Main function to run all other functions in script. This is
+#             the entry point from Run All scripts and automated imports.
+#             Uses a predetermined CSV file path and table name.
+#Parameters: parent --> parent ttk window
+#            connection --> MySQL db connection for queries and imports
+#            file_path --> CSV file path
+#            table_name --> target db table name
+#Return Values: success --> T/F import status
+############################################################################
 
     print("Running CSV import...")
     print("File:", file_path)
     print("Table:", table_name)
 
     if not file_path or not table_name:
-        messagebox.showerror("Error", "File path and table name are required.", parent=parent)
-        return False   
+
+        if parent:
+            messagebox.showerror(
+                "Error",
+                "File path and table name are required.",
+                parent=parent
+            )
+
+        return False
 
     try:
+
         df = csv_to_df(file_path)
 
         if df is not None:
-            #import_data(connection, table_name, df, parent)
-            return import_data(connection, table_name, df, parent)
-        
-    except Exception as e:
-        print("Run error:", e)
-        messagebox.showerror("Error", str(e), parent=parent)
+
+            success, error_msg = import_data(
+                connection,
+                table_name,
+                df,
+                parent
+            )
+
+            if not success:
+
+                if parent:
+                    messagebox.showerror(
+                        "Import Failed",
+                        error_msg,
+                        parent=parent
+                    )
+
+                return False
+
+            return True
+
+    except Exception as err:
+
+        print("Run error:", err)
+
+        if parent:
+            messagebox.showerror(
+                "Error",
+                str(err),
+                parent=parent
+            )
+
         return False
-
-# ----------------------------- CLI ENTRY ----------------------------- #
-
-def main():
-    parser = argparse.ArgumentParser(description="Import CSV into MySQL table.")
-    parser.add_argument("file_path", type=Path, help="Path to CSV file")
-    parser.add_argument("table_name", type=str, help="Target table name")
-
-    args = parser.parse_args()
-
-    # ⚠️ You must plug in your connection here
-    import mysql.connector
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="your_password",
-        database="your_database"
-    )
-
-    # No GUI parent in CLI mode
-    run(None, connection, None, args.file_path, args.table_name)
-
-
-if __name__ == "__main__":
-    main()

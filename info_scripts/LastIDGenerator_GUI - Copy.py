@@ -15,15 +15,65 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 
-def choose_table_window(parent, tables):
-############################################################################
-#Function Name: choose_table_window
-#Description: Allows user to select table in db to analyze
-#Parameters: parent --> parent ttk window
-#            tables --> list of db tables
-#Return Values: selected_table --> user selected table name
-############################################################################
 
+def choose_table_windowOLD(parent, tables):
+
+    result = {"table": None}
+
+    win = tk.Toplevel(parent)
+    win.title("Select Table")
+    win.geometry("380x250")
+
+    tk.Label(
+        win,
+        text="Select table to view current IDs",
+        font=("Segoe UI", 11)
+    ).pack(pady=15)
+
+    selected_table = tk.StringVar(win)
+    selected_table.set(tables[0])
+
+    dropdown = ttk.Combobox(
+        win,
+        textvariable=selected_table,
+        values=tables,
+        state="readonly",
+        width=30
+    )
+    dropdown.pack(pady=10)
+
+    def confirm():
+        result["table"] = selected_table.get()
+        win.destroy()
+
+    def abort():
+        result["table"] = None
+        win.destroy()
+
+    button_frame = tk.Frame(win)
+    button_frame.pack(pady=15)
+
+    tk.Button(
+        button_frame,
+        text="Confirm",
+        width=12,
+        command=confirm
+    ).pack(side="left", padx=5)
+
+    tk.Button(
+        button_frame,
+        text="Abort",
+        width=12,
+        command=abort
+    ).pack(side="left", padx=5)
+
+    win.transient(parent)
+    win.grab_set()
+    parent.wait_window(win)
+
+    return result["table"]
+
+def choose_table_window(parent, tables):
 
     result = {"table": None}
 
@@ -74,15 +124,11 @@ def choose_table_window(parent, tables):
 
     return result["table"]
 
+# --------------------------------------------------
+# GET VALID TABLES
+# --------------------------------------------------
+
 def get_table_names(connection, database_name):
-############################################################################
-#Function Name: get_table_names
-#Description: uses MySQL connector to query and return all table names with 
-#             an ID and NAME column
-#Parameters: connection --> MySQL db connection for queries and imports
-#            database_name --> "lsr_testing_database"
-#Return Values: tables --> array of table names from db
-############################################################################
 
     cursor = connection.cursor()
 
@@ -103,16 +149,12 @@ def get_table_names(connection, database_name):
 
     return tables
 
+
+# --------------------------------------------------
+# GET ID COLUMN
+# --------------------------------------------------
+
 def get_id_column(connection, database_name, table_name):
-############################################################################
-#Function Name: get_ID_column
-#Description: uses MySQL connector to query and return ID col name in a  
-#             specified table
-#Parameters: connection --> MySQL db connection for queries and imports
-#            database_name --> "lsr_testing_database"
-#            table_name --> table name from db
-#Return Values: row[0] --> column name of IDs from the table
-############################################################################
 
     cursor = connection.cursor()
 
@@ -135,16 +177,12 @@ def get_id_column(connection, database_name, table_name):
 
     return row[0]
 
+
+# --------------------------------------------------
+# GET LAST ID
+# --------------------------------------------------
+
 def get_last_id(connection, table_name, id_col):
-############################################################################
-#Function Name: get_last_id
-#Description: uses MySQL connector to query and return highest ID in a  
-#             specified table column
-#Parameters: connection --> MySQL db connection for queries and imports
-#            table_name --> table name from db
-#            id_col --> column name of IDs from the table
-#Return Values: row[0] --> highest non-sample ID from the table
-############################################################################
 
     cursor = connection.cursor()
 
@@ -167,14 +205,12 @@ def get_last_id(connection, table_name, id_col):
 
     return None
 
-def generate_next_id(last_id):
-############################################################################
-#Function Name: generate_next_id
-#Description: calculate highest ID + 1 for a specified table column
-#Parameters: last_id --> highest value ID from the table
-#Return Values: next_ID --> highest ID + 1
-############################################################################
 
+# --------------------------------------------------
+# CALCULATE NEXT ID
+# --------------------------------------------------
+
+def generate_next_id(last_id):
     """
     Preserve leading zeros.
     Example:
@@ -191,18 +227,93 @@ def generate_next_id(last_id):
 
     return next_id
 
+
+# --------------------------------------------------
+# DISPLAY RESULT WINDOW
+# --------------------------------------------------
+
+def display_id_windowOld(
+    parent,
+    table_name,
+    id_col,
+    last_id,
+    next_id
+):
+
+    win = tk.Toplevel(parent)
+    win.title("Current ID Information")
+    win.geometry("460x550")
+
+    frame = ttk.Frame(
+        win,
+        padding=25
+    )
+    frame.pack(fill="both", expand=True)
+
+    ttk.Label(
+        frame,
+        text="ID Information",
+        font=("Segoe UI",15,"bold")
+    ).pack(pady=(0,20))
+
+
+    ttk.Label(
+        frame,
+        text=f"Table: {table_name}",
+        font=("Segoe UI",11)
+    ).pack(pady=4)
+
+    ttk.Label(
+        frame,
+        text=f"ID Column: {id_col}",
+        font=("Segoe UI",11)
+    ).pack(pady=4)
+
+
+    ttk.Separator(frame).pack(
+        fill="x",
+        pady=18
+    )
+
+
+    ttk.Label(
+        frame,
+        text="Last Used ID",
+        font=("Segoe UI",11)
+    ).pack()
+
+    ttk.Label(
+        frame,
+        text=last_id,
+        font=("Consolas",18,"bold")
+    ).pack(pady=(5,18))
+
+
+    ttk.Label(
+        frame,
+        text="Next Available ID",
+        font=("Segoe UI",11)
+    ).pack()
+
+    ttk.Label(
+        frame,
+        text=next_id,
+        font=("Consolas",18,"bold")
+    ).pack(pady=5)
+
+
+    ttk.Button(
+        frame,
+        text="Close",
+        command=win.destroy
+    ).pack(pady=20)
+
+
+    win.transient(parent)
+    win.grab_set()
+    parent.wait_window(win)
+
 def display_id_window(parent, table_name, id_col, last_id, next_id):
-############################################################################
-#Function Name: display_id_window
-#Description: display a window that shows highest ID in the table and the
-#             next availible ID for use
-#Parameters: parent --> parent ttk window
-#            table_name --> name of table in the db
-#            ID_col --> name of ID col
-#            last_id --> highest non-sample ID value in table
-#            next_id --> next ID availible for use
-#Return Values: none
-############################################################################
 
     win = tk.Toplevel(parent)
     win.title("Current ID Information")
@@ -239,16 +350,11 @@ def display_id_window(parent, table_name, id_col, last_id, next_id):
 
     parent.wait_window(win)
 
-#IMPORT MAIN GUI ENTRY
+# --------------------------------------------------
+# MAIN ENTRY POINT
+# --------------------------------------------------
+
 def run(parent, connection, database_name):
-############################################################################
-#Function Name: run
-#Description: runs all functions in this script
-#Parameters: parent --> parent ttk window
-#            connection --> MySQL db connection for queries and imports
-#            database_name --> "lsr_testing_database"
-#Return Values: none
-############################################################################
 
     tables = get_table_names(
         connection,
