@@ -3,7 +3,7 @@
 Program Filename: RunAll_GUI.py
 Author: Mason Allen
 Created Date: 4/9/2026
-Last Updated Date: 6/3/2026
+Last Updated Date: 4/28/2026
 Description: This script imports an entire field day's worth of data into the
              LSR testing database. All data must be formatted and labelled 
              correctly, as well as placed into a single data folder before 
@@ -528,53 +528,80 @@ def run(parent, connection, database_name):
 
         #if user selects derbi...
         if answer == "d":
-
-            #compile list of datalogger files using labelling convention
-            data_files = list(folder_path.glob("dq_my_or_*.csv"))
-
-            if not data_files:
-                #warn user if theres no files
-                messagebox.showwarning("No Files", "No DataQ-Mychron files found.", parent=parent)
             
-            else:
-                #import files one by one
-                for file_path in data_files:
+            #ask user what type of import they would like to run
+            answer = ask_import_setup(parent)
 
-                    #extract testID from file name
-                    testID = extract_test_id_dataq_mychron(file_path)
+            #if user selects single excel... (this is currently an unused option)
+            if answer == "x":
+                
+                messagebox.showwarning("Under Construction", 
+                                       "Single Excel import is not functional yet. Skipping datalogger entry...", 
+                                       parent=parent)
+                
+                #Unused script for single excel import
+                ######################################
+                #Merge DataQ & MyChron files
+                #datalog_sync_master_GUI.run_auto(parent, folder_path)
 
-                    #if testID is not located, skip import
-                    if not testID:
-                        print(f"Skipping file (no testID found): {file_path}")
-                        continue
+                #Extract individual test csvs from excel
+                #file_path = folder_path / "dataq_mychron_merge.xlsx"
+                #ExcelToCSV_GUI.run_auto(
+                #    parent,
+                #    file_path,
+                #    folder_path
+                #)
+                ######################################
 
-                    print(f"Processing Dataq-Mychron file: {file_path} with testID={testID}")
+            #if user selects multiple csv...
+            if answer == "c":
 
-                    #format datalogger file for db CSV import
-                    output_file = Dataq_MychronFormatting_GUI.run_auto_noform(
-                        file_path,
-                        folder_path,
-                        testID,
-                        parent
-                    )
+                #compile list of datalogger files using labelling convention
+                data_files = list(folder_path.glob("dq_my_or_*.csv"))
 
-                    if output_file:
+                if not data_files:
+                    #warn user if theres no files
+                    messagebox.showwarning("No Files", "No DataQ-Mychron files found.", parent=parent)
+                
+                else:
+                    #import files one by one
+                    for file_path in data_files:
 
-                        #import dataq_mychron3_data tbl
-                        table_name = "dataq_mychron3_data"
+                        #extract testID from file name
+                        testID = extract_test_id_dataq_mychron(file_path)
 
-                        success = csv_import(
-                            parent,
-                            connection,
-                            database_name,
-                            output_file,
-                            table_name,
-                            ctx
+                        #if testID is not located, skip import
+                        if not testID:
+                            print(f"Skipping file (no testID found): {file_path}")
+                            continue
+
+                        print(f"Processing Dataq-Mychron file: {file_path} with testID={testID}")
+
+                        #format datalogger file for db CSV import
+                        output_file = Dataq_MychronFormatting_GUI.run_auto_noform(
+                            file_path,
+                            folder_path,
+                            testID,
+                            parent
                         )
 
-                        #track success specific to testID
-                        if success:
-                            ctx.imported_tables.add(f"{table_name} ({testID})")
+                        if output_file:
+
+                            #import dataq_mychron3_data tbl
+                            table_name = "dataq_mychron3_data"
+
+                            success = csv_import(
+                                parent,
+                                connection,
+                                database_name,
+                                output_file,
+                                table_name,
+                                ctx
+                            )
+
+                            #track success specific to testID
+                            if success:
+                                ctx.imported_tables.add(f"{table_name} ({testID})")
 
         #if user selects "Aprilia"... (unfinished section of script. Update when MaxxECU tbl is active in db)
         elif answer == "a":

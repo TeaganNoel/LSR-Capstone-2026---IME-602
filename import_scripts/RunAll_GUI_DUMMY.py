@@ -1,10 +1,12 @@
 """
 ############################################################################
-Program Filename: RunAll_GUI.py
+Program Filename: RunAll_GUI_DUMMY.py
 Author: Mason Allen
 Created Date: 4/9/2026
 Last Updated Date: 6/3/2026
-Description: This script imports an entire field day's worth of data into the
+Description: THIS IS A DUMMY SCRIPT WITH NO IMPORT OR FORMATTING FUNCTIONALITY. MADE FOR THE ENGR EXPO
+
+             This script imports an entire field day's worth of data into the
              LSR testing database. All data must be formatted and labelled 
              correctly, as well as placed into a single data folder before 
              this script can be used. The script is made to be run from the 
@@ -21,13 +23,13 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 import re
 
-from import_scripts import ImportCSVSpecific_GUI
-from import_scripts import ImportForm_GUI
+#from import_scripts import ImportCSVSpecific_GUI
+from import_scripts import ImportForm_GUI_DUMMY
 
-from formatting_scripts import Dataq_MychronFormatting_GUI
-from formatting_scripts import ExcelToCSV_GUI
-from formatting_scripts import KestrelFormatting_GUI
-from formatting_scripts import datalog_sync_master_GUI
+#from formatting_scripts import Dataq_MychronFormatting_GUI
+#from formatting_scripts import ExcelToCSV_GUI
+#from formatting_scripts import KestrelFormatting_GUI
+#from formatting_scripts import datalog_sync_master_GUI
 
 class UserAbort(Exception):
 ############################################################################
@@ -93,7 +95,7 @@ def run_form_loop(parent, connection, ctx):
 
     while True:
 
-        success, imported_tbl = ImportForm_GUI.run(
+        success, imported_tbl = ImportForm_GUI_DUMMY.run(
             parent,
             connection,
             "lsr_testing_database"
@@ -126,7 +128,7 @@ def run_form_loop_prototype(parent, connection, table, ctx):
 
     while True:
 
-        success = ImportForm_GUI.run_auto(
+        success = ImportForm_GUI_DUMMY.run_auto(
             parent,
             connection,
             "lsr_testing_database",
@@ -160,7 +162,7 @@ def run_form_loop_condition(parent, connection, table, ctx):
 
     while True:
 
-        success = ImportForm_GUI.run_auto(
+        success = ImportForm_GUI_DUMMY.run_auto(
             parent,
             connection,
             "lsr_testing_database",
@@ -283,7 +285,7 @@ def csv_import(parent, connection, db, file, table, ctx):
 #Return Values: success --> tracks whether import occured or not
 ############################################################################
     
-    success = ImportCSVSpecific_GUI.run(parent, connection, file, table)
+    success = True
 
     if success:
         ctx.imported_tables.add(table)
@@ -437,11 +439,11 @@ def run(parent, connection, database_name):
         file_path = folder_path / "excel_datasheet.xlsx"
 
         #turn datasheet Excel into CSVs
-        ExcelToCSV_GUI.run_auto(
-            parent,
-            file_path,
-            folder_path
-        )
+        #ExcelToCSV_GUI.run_auto(
+        #    parent,
+        #    file_path,
+        #    folder_path
+        #)
 
         #Import configuration tbl
         file_path = folder_path / "configuration.csv"
@@ -454,9 +456,9 @@ def run(parent, connection, database_name):
         csv_import(parent, connection, database_name, file_path, table_name, ctx)
         
         #Import external media tbl
-        #file_path = folder_path / "media.csv"
-        #table_name = "external_media"
-        #csv_import(parent, connection, database_name, file_path, table_name, ctx)
+        file_path = folder_path / "media.csv"
+        table_name = "external_media"
+        csv_import(parent, connection, database_name, file_path, table_name, ctx)
         
         #Ask user if prototypes were tested during the field day
         answer = messagebox.askyesno(
@@ -519,9 +521,9 @@ def run(parent, connection, database_name):
         csv_import(parent, connection, database_name, file_path, table_name, ctx)
 
         #Import rel_media_test tbl
-        #file_path = folder_path / "rel_media_test.csv"
-        #table_name = "rel_external_media_test"
-        #csv_import(parent, connection, database_name, file_path, table_name, ctx)
+        file_path = folder_path / "rel_media_test.csv"
+        table_name = "rel_external_media_test"
+        csv_import(parent, connection, database_name, file_path, table_name, ctx)
         
         #ask user which vehicle was used during field day testing
         answer = ask_vehicle(parent)
@@ -551,12 +553,13 @@ def run(parent, connection, database_name):
                     print(f"Processing Dataq-Mychron file: {file_path} with testID={testID}")
 
                     #format datalogger file for db CSV import
-                    output_file = Dataq_MychronFormatting_GUI.run_auto_noform(
-                        file_path,
-                        folder_path,
-                        testID,
-                        parent
-                    )
+                    output_file = True
+                    #output_file = Dataq_MychronFormatting_GUI.run_auto_noform(
+                    #    file_path,
+                    #    folder_path,
+                    #    testID,
+                    #    parent
+                    #)
 
                     if output_file:
 
@@ -617,12 +620,13 @@ def run(parent, connection, database_name):
                     print(f"Processing Kestrel file: {file_path} with testID={testID}")
 
                     #format Kestrel file for db CSV import
-                    output_file = KestrelFormatting_GUI.run_auto_noform(
-                        file_path,
-                        folder_path,
-                        testID,
-                        parent
-                    )
+                    output_file = True
+                    #output_file = KestrelFormatting_GUI.run_auto_noform(
+                    #    file_path,
+                    #    folder_path,
+                    #    testID,
+                    #    parent
+                    #)
 
                     if output_file:
 
